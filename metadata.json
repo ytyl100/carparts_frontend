@@ -1,0 +1,5 @@
+{
+  "name": "Precision EV Parts Procurement System",
+  "description": "A high-end ERP-style parts lookup system for electric vehicles, featuring brand-based filtering, model specifications, exploded diagrams with interactive part selection, and detailed pricing analysis.",
+  "requestFramePermissions": []
+}
