@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Part, PriceRecord, ReplacementPart, AdaptableModel, SubCategory, Brand, MainCategory } from '../types';
 import { MockApiClient } from '../services/repositoryClient';
+import { PARTS_MOCK } from '../data';
 import * as XLSX from 'xlsx';
 
 // 自动化分类匹配缓存
