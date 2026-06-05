@@ -1004,8 +1004,77 @@ const SearchParts: React.FC<SearchPartsProps> = ({ onAddToCart, isAdmin = false 
     try {
       let parts: Part[] = [];
       
+      // 按品牌搜索 - 如果选择了品牌
+      if (brand && !selectedVehicleCode && !term.trim()) {
+        // 通过品牌名获取对应的vehicleCode，然后获取配件
+        try {
+          const brandsData = await MockApiClient.getBrands();
+          const selectedBrand = brandsData.find(b => b.name === brand);
+          if (selectedBrand) {
+            // 获取品牌的车型层级
+            const hierarchy = await MockApiClient.getHierarchyByBrandId(selectedBrand.id);
+            if (hierarchy) {
+              // 遍历所有车型获取配件
+              const allParts: Part[] = [];
+              const processRegion = (region: any) => {
+                if (!region) return;
+                const models = region.models || {};
+                Object.values(models).forEach((modelData: any) => {
+                  // 处理带releases的车型
+                  if (modelData.releases) {
+                    Object.values(modelData.releases).forEach((releaseData: any) => {
+                      if (Array.isArray(releaseData)) {
+                        releaseData.forEach(async (code: string) => {
+                          try {
+                            const mainCats = await MockApiClient.getMainCategoriesByVehicleCode(code);
+                            for (const mc of mainCats) {
+                              const subs = await MockApiClient.getSubCategoriesByParentId(mc.id);
+                              for (const sc of subs) {
+                                const ps = await MockApiClient.getPartsBySubCategoryId(sc.id);
+                                allParts.push(...ps);
+                              }
+                            }
+                          } catch { /* skip */ }
+                        });
+                      }
+                    });
+                  }
+                  // 处理直接有codes的车型
+                  if (modelData.codes && Array.isArray(modelData.codes)) {
+                    modelData.codes.forEach(async (code: string) => {
+                      try {
+                        const mainCats = await MockApiClient.getMainCategoriesByVehicleCode(code);
+                        for (const mc of mainCats) {
+                          const subs = await MockApiClient.getSubCategoriesByParentId(mc.id);
+                          for (const sc of subs) {
+                            const ps = await MockApiClient.getPartsBySubCategoryId(sc.id);
+                            allParts.push(...ps);
+                          }
+                        }
+                      } catch { /* skip */ }
+                    });
+                  }
+                });
+              };
+              
+              // 处理regions格式
+              if (hierarchy.regions) {
+                Object.values(hierarchy.regions).forEach((region: any) => processRegion(region));
+              } else if (hierarchy.models) {
+                processRegion({ models: hierarchy.models });
+              }
+              
+              // 去重
+              const uniqueParts = allParts.filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i);
+              parts = uniqueParts;
+            }
+          }
+        } catch (e) {
+          console.error('Brand search failed:', e);
+        }
+      }
       // 优先按 vehicleCode 获取配件（如果有选择车型）
-      if (selectedVehicleCode) {
+      else if (selectedVehicleCode) {
         // 获取该 vehicleCode 下的所有主类目 -> 子类目 -> 配件
         try {
           const mainCats = await MockApiClient.getMainCategoriesByVehicleCode(selectedVehicleCode);
