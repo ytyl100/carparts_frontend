@@ -423,7 +423,7 @@ const PartDetailViewer: React.FC<PartDetailViewerProps> = ({ subCategory, onAddT
         {/* Right Data Panel Section */}
         <div 
           className={`flex flex-col bg-white border-l shadow-xl z-10 overflow-hidden ${isManageMode ? 'border-orange-200' : 'border-gray-200'}`}
-          style={{ width: `${100 - leftWidthPercent}%` }}
+          style={{ width: `${100 - leftWidthPercent}%`}}
         >
           <div className="flex-1 overflow-auto custom-scrollbar">
             <table className="w-full text-left border-collapse table-fixed min-w-[600px]">

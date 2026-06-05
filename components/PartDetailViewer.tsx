@@ -671,7 +671,7 @@ const PartDetailViewer: React.FC<PartDetailViewerProps> = ({
         {/* Right Data Panel Section */}
         <div
           className={`flex flex-col bg-white border-l shadow-xl z-10 overflow-hidden ${isManageMode ? "border-orange-200" : "border-gray-200"}`}
-          style={{ width: `${100 - leftWidthPercent}%` }}
+          style={{ width: `${100 - leftWidthPercent}%`,height: '810px' }}
         >
           <div className="flex-1 overflow-auto custom-scrollbar">
             <table className="w-full text-left border-collapse table-fixed min-w-[600px]">
@@ -853,7 +853,9 @@ const PartDetailViewer: React.FC<PartDetailViewerProps> = ({
           </div>
 
           {/* Sub-Tabs Panel Section */}
-          <div className="h-[400px] border-t-2 flex flex-col bg-white shadow-inner flex-shrink-0">
+          <div className="h-[400px] border-t-2 flex flex-col bg-white shadow-inner flex-shrink-0"
+          style={{ height: '300px' }}
+          >
             <div
               className={`flex border-b p-1 ${isManageMode ? "bg-orange-50" : "bg-gray-50"}`}
             >
