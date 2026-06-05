@@ -7,13 +7,13 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
       server: {
-        port: 3000,
+        port: 5173,
         host: '0.0.0.0',
         allowedHosts: ['cpf.xhfair.com', '.xhfair.com'],
       },
       preview: {
         host: '0.0.0.0',
-        port: 3000,
+        port: 5173,
         allowedHosts: ['cpf.xhfair.com', '.xhfair.com'],
       },
       plugins: [react(),tailwindcss(),],
