@@ -114,14 +114,14 @@ class RepositoryClient {
     this.request<Brand[]>('Brands/hot', 'GET', {}, true, false, BRANDS.filter(b => b.isHot));
 
   createBrand = (brand: Brand) =>
-    this.request<Brand>('api/brands', 'POST', brand, true, false, { ...brand, id: Date.now().toString() });
+    this.request<Brand>('Brands', 'POST', brand, true, false, { ...brand, id: Date.now().toString() });
 
   replaceAllBrands = (brands: Brand[]): Promise<BatchUpdateResponse> =>
     this.request<BatchUpdateResponse>('Brands/batch', 'PUT', brands, true, false);
 
   // --- MainCategories Methods ---
   getMainCategories = () =>
-    this.request<MainCategory[]>('api/maincategories', 'GET', {}, true, false, MAIN_CATEGORIES);
+    this.request<MainCategory[]>('MainCategories', 'GET', {}, true, false, MAIN_CATEGORIES);
 
   getMainCategoriesByVehicleCode = (vehicleCode: string) =>
     this.request<MainCategory[]>(`MainCategories/vehicle/${encodeURIComponent(vehicleCode)}`, 'GET', {}, true, false);
@@ -137,7 +137,7 @@ class RepositoryClient {
 
   // --- SubCategories Methods ---
   getSubCategories = () =>
-    this.request<SubCategory[]>('api/subcategories', 'GET', {}, true, false, SUB_CATEGORIES);
+    this.request<SubCategory[]>('SubCategories', 'GET', {}, true, false, SUB_CATEGORIES);
 
   getSubCategoriesByParentId = (parentId: string) =>
     this.request<SubCategory[]>(`SubCategories/parent/${encodeURIComponent(parentId)}`, 'GET', {}, true, false);
@@ -154,38 +154,30 @@ class RepositoryClient {
   // --- Parts Methods ---
   getPartsBySubCategoryId = (subCategoryId: string) => {
     const mock = undefined; // PARTS_MOCK.filter(p => p.subCategoryId === subCategoryId);
-    return this.request<Part[]>(`CarParts/category/${subCategoryId}`, 'GET', {}, true, false, mock);
+    return this.request<Part[]>(`Parts/category/${subCategoryId}`, 'GET', {}, true, false, mock);
   };
 
   getPartByOeNumber = (oeNumber: string) => {
     const mock = undefined; // PARTS_MOCK.find(p => p.oeNumber === oeNumber);
-    return this.request<Part>(`api/parts/oe/${encodeURIComponent(oeNumber)}`, 'GET', {}, true, false, mock);
+    return this.request<Part>(`Parts/oe/${encodeURIComponent(oeNumber)}`, 'GET', {}, true, false, mock);
   };
 
-  // Free text search for car parts (backend: GET api/parts/search?term=...)
+  // Free text search for car parts (backend: POST api/parts/search with body {keyword, pageIndex, pageSize})
   searchParts = (term: string) => {
-    // let mock = PARTS_MOCK.filter(p => {
-    //   const t = term?.toLowerCase() || '';
-    //   return (
-    //     p.standardName.toLowerCase().includes(t) ||
-    //     p.originalName.toLowerCase().includes(t) ||
-    //     p.oeNumber.toLowerCase().includes(t)
-    //   );
-    // });
-    const mock = undefined; // Disable mock for search to test real API
-    return this.request<Part[]>(`CarParts/search`, 'GET', { term }, true, false, mock);
+    const mock = undefined;
+    return this.request<Part[]>('Parts/search', 'POST', { keyword: term, pageIndex: 1, pageSize: 100 }, true, false, mock);
   };
 
   // Get parts by category (backend: GET api/parts/category/{category})
   getPartsByCategory = (category: string) => {
-    const mock = undefined; // PARTS_MOCK.filter(p => p.subCategoryId === category || p.subCategoryId === category);
-    return this.request<Part[]>(`CarParts/category/${encodeURIComponent(category)}`, 'GET', {}, true, false, mock);
+    const mock = undefined;
+    return this.request<Part[]>(`Parts/category/${encodeURIComponent(category)}`, 'GET', {}, true, false, mock);
   };
 
   // Get part details by id (backend: GET api/parts/{id})
   getPartById = (id: string) => {
     const mock = undefined; // PARTS_MOCK.find(p => p.id === id) || null;
-    return this.request<Part | null>(`CarParts/${encodeURIComponent(id)}`, 'GET', {}, true, false, mock);
+    return this.request<Part | null>(`Parts/${encodeURIComponent(id)}`, 'GET', {}, true, false, mock);
   };
 
   // --- VehicleHierarchy Methods ---
@@ -206,7 +198,7 @@ class RepositoryClient {
     };
   }): Promise<BatchUpdateResponse> => {
     return this.request<BatchUpdateResponse>(
-      'CarParts/batch-update', 
+      'Parts/batch-update', 
       'POST', 
       updateData, 
       true, 
@@ -216,15 +208,15 @@ class RepositoryClient {
 
   // 更新单个零部件
   updatePart = (part: Part) =>
-    this.request<Part>(`CarParts/${encodeURIComponent(part.id)}`, 'PUT', part, true, false, part);
+    this.request<Part>(`Parts/${encodeURIComponent(part.id)}`, 'PUT', part, true, false, part);
 
   // 删除零部件
   deletePart = (id: string) =>
-    this.request<void>(`CarParts/${encodeURIComponent(id)}`, 'DELETE', {}, true, false);
+    this.request<void>(`Parts/${encodeURIComponent(id)}`, 'DELETE', {}, true, false);
 
   // 创建新零部件
   createPart = (part: Part) =>
-    this.request<Part>('CarParts', 'POST', part, true, false, { ...part, id: `p${Date.now()}` });
+    this.request<Part>('Parts', 'POST', part, true, false, { ...part, id: `p${Date.now()}` });
 
 }
 

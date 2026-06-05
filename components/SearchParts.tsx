@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Part, PriceRecord, ReplacementPart, AdaptableModel, SubCategory, Brand, MainCategory } from '../types';
 import { MockApiClient } from '../services/repositoryClient';
-import { PARTS_MOCK, SUB_CATEGORIES, BRANDS, MAIN_CATEGORIES } from '../data';
 import * as XLSX from 'xlsx';
 
 interface SearchPartsProps {
@@ -29,6 +28,12 @@ const SearchParts: React.FC<SearchPartsProps> = ({ onAddToCart, isAdmin = false 
   const [selected, setSelected] = useState<Part | null>(null);
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+
+  // API数据状态 - 替代原来的Mock数据
+  const [apiBrands, setApiBrands] = useState<Brand[]>([]);
+  const [apiMainCategories, setApiMainCategories] = useState<MainCategory[]>([]);
+  const [apiSubCategories, setApiSubCategories] = useState<SubCategory[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
 
   // 管理模式状态
   const [isManageMode, setIsManageMode] = useState(false);
@@ -74,6 +79,28 @@ const SearchParts: React.FC<SearchPartsProps> = ({ onAddToCart, isAdmin = false 
 
   useEffect(() => {
     // initial show none
+  }, []);
+
+  // 组件加载时从API获取基础数据
+  useEffect(() => {
+    const loadApiData = async () => {
+      setDataLoading(true);
+      try {
+        const [brandsData, mainCatsData, subCatsData] = await Promise.all([
+          MockApiClient.getBrands(),
+          MockApiClient.getMainCategories(),
+          MockApiClient.getSubCategories()
+        ]);
+        setApiBrands(brandsData);
+        setApiMainCategories(mainCatsData);
+        setApiSubCategories(subCatsData);
+      } catch (error) {
+        console.error('加载API数据失败:', error);
+      } finally {
+        setDataLoading(false);
+      }
+    };
+    loadApiData();
   }, []);
 
   const handleSort = (field: SortField) => {
@@ -327,7 +354,7 @@ const SearchParts: React.FC<SearchPartsProps> = ({ onAddToCart, isAdmin = false 
       setBindSubCategories(subs);
     } catch (e) {
       console.error('Failed to load subcategories:', e);
-      const filtered = SUB_CATEGORIES.filter(s => s.parentId === mainCatId);
+      const filtered = apiSubCategories.filter(s => s.parentId === mainCatId);
       setBindSubCategories(filtered);
     } finally {
       setBindSubLoading(false);
@@ -344,7 +371,7 @@ const SearchParts: React.FC<SearchPartsProps> = ({ onAddToCart, isAdmin = false 
   const handleBindCategory = async () => {
     if (!selected || !selectedBindSubCategory) return;
     
-    const brandName = BRANDS.find(b => b.id === bindBrandId)?.name || '';
+    const brandName = apiBrands.find(b => b.id === bindBrandId)?.name || '';
     
     setPendingAction({
       type: 'BIND_CATEGORY',
@@ -406,7 +433,7 @@ const SearchParts: React.FC<SearchPartsProps> = ({ onAddToCart, isAdmin = false 
       return;
     }
 
-    const brandName = BRANDS.find(b => b.id === bindBrandId)?.name || '';
+    const brandName = apiBrands.find(b => b.id === bindBrandId)?.name || '';
     
     const newPart: Part = {
       id: Date.now().toString(),
@@ -1024,13 +1051,13 @@ const SearchParts: React.FC<SearchPartsProps> = ({ onAddToCart, isAdmin = false 
         />
         <select value={category} onChange={e => setCategory(e.target.value)} className="px-3 py-1.5 text-xs border border-gray-200 rounded">
           <option value="">全部分类</option>
-          {SUB_CATEGORIES.map(sc => (
+          {apiSubCategories.map(sc => (
             <option key={sc.id} value={sc.id}>{sc.name}</option>
           ))}
         </select>
         <select value={brand} onChange={e => setBrand(e.target.value)} className="px-3 py-1.5 text-xs border border-gray-200 rounded">
           <option value="">全部品牌</option>
-          {BRANDS.map(b => (
+          {apiBrands.map(b => (
             <option key={b.id} value={b.name}>{b.name}</option>
           ))}
         </select>
@@ -1668,7 +1695,7 @@ const SearchParts: React.FC<SearchPartsProps> = ({ onAddToCart, isAdmin = false 
                   className="w-full px-3 py-2 text-sm border rounded focus:ring-2 focus:ring-blue-500 outline-none"
                 >
                   <option value="">请选择品牌</option>
-                  {BRANDS.map(b => (
+                  {apiBrands.map(b => (
                     <option key={b.id} value={b.id}>{b.name}</option>
                   ))}
                 </select>
@@ -1854,7 +1881,7 @@ const SearchParts: React.FC<SearchPartsProps> = ({ onAddToCart, isAdmin = false 
                 <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-xs">
                   <span className="font-bold text-blue-700">当前路径：</span>
                   <span className="text-gray-600">
-                    {BRANDS.find(b => b.id === bindBrandId)?.name || ''}
+                    {apiBrands.find(b => b.id === bindBrandId)?.name || ''}
                     {bindRegion ? ` > ${bindRegion}` : ''}
                     {bindModel ? ` > ${bindModel}` : ''}
                     {bindDate ? ` > ${bindDate}` : ''}
