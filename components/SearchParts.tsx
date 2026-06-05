@@ -32,6 +32,9 @@ const SearchParts: React.FC<SearchPartsProps> = ({ onAddToCart, isAdmin = false 
   const [selected, setSelected] = useState<Part | null>(null);
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  
+  // 车型代码状态 - 用于按车型筛选
+  const [selectedVehicleCode, setSelectedVehicleCode] = useState('');
 
   // API数据状态 - 替代原来的Mock数据
   const [apiBrands, setApiBrands] = useState<Brand[]>([]);

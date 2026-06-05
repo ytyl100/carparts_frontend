@@ -153,8 +153,12 @@ class RepositoryClient {
 
   // --- Parts Methods ---
   getPartsBySubCategoryId = (subCategoryId: string) => {
-    const mock = undefined; // PARTS_MOCK.filter(p => p.subCategoryId === subCategoryId);
-    return this.request<Part[]>(`Parts/category/${subCategoryId}`, 'GET', {}, true, false, mock);
+    // 使用 POST /Parts/search 带 subCategoryId 参数，因为 GET /Parts/category/{id} 返回404
+    return this.request<Part[]>('Parts/search', 'POST', { 
+      subCategoryId, 
+      pageIndex: 1, 
+      pageSize: 1000 
+    }, true, false, undefined);
   };
 
   getPartByOeNumber = (oeNumber: string) => {
