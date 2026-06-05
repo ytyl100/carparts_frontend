@@ -3,6 +3,9 @@ import { Part, PriceRecord, ReplacementPart, AdaptableModel, SubCategory, Brand,
 import { MockApiClient } from '../services/repositoryClient';
 import * as XLSX from 'xlsx';
 
+// 自动化分类匹配缓存
+const categoryMatchCache: Record<string, SubCategory> = {};
+
 interface SearchPartsProps {
   onAddToCart: (item: any) => void;
   isAdmin?: boolean;
@@ -751,6 +754,18 @@ const SearchParts: React.FC<SearchPartsProps> = ({ onAddToCart, isAdmin = false 
         const carModel = String(idxCarModel >= 0 ? (row[idxCarModel] || '') : '').trim();
         const model = String(idxModel >= 0 ? (row[idxModel] || '') : '').trim();
         const brand = String(idxBrand >= 0 ? (row[idxBrand] || '') : '').trim();
+        const subCategoryIdRaw = String(idxSubCategoryId >= 0 ? (row[idxSubCategoryId] || '') : '').trim();
+        
+        // 自动化分类匹配
+        let matchedSubCategoryId = '';
+        let matchedSubCategoryName = '';
+        if (subCategoryIdRaw) {
+          const matched = autoMatchCategory(subCategoryIdRaw);
+          if (matched) {
+            matchedSubCategoryId = matched.id;
+            matchedSubCategoryName = matched.name;
+          }
+        }
 
         // 生成唯一ID
         const brandPrefix = brand ? brand.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase() : 'import';
@@ -769,6 +784,8 @@ const SearchParts: React.FC<SearchPartsProps> = ({ onAddToCart, isAdmin = false 
           carModel,
           model,
           brand,
+          subCategoryId: matchedSubCategoryId,
+          subCategoryName: matchedSubCategoryName,
           id: uniqueId,
         });
       }
@@ -880,7 +897,7 @@ const SearchParts: React.FC<SearchPartsProps> = ({ onAddToCart, isAdmin = false 
         // 构建Part数据结构
         const part: Part = {
           id: existingPart?.id || row.id,
-          subCategoryId: existingPart?.subCategoryId || '',
+          subCategoryId: row.subCategoryId || existingPart?.subCategoryId || '',
           position: existingPart?.position || '00000',
           oeNumber: row.oeNumber || existingPart?.oeNumber || '',
           partsNumber: row.partsNumber || existingPart?.partsNumber || '',

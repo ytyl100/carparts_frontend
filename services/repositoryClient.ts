@@ -168,6 +168,13 @@ class RepositoryClient {
     return this.request<Part[]>('Parts/search', 'POST', { keyword: term, pageIndex: 1, pageSize: 100 }, true, false, mock);
   };
 
+  // Search parts with category filter (backend: POST api/parts/search with body {keyword, subCategoryId, vehicleCode, pageIndex, pageSize})
+  searchPartsWithCategory = (searchBody: { keyword?: string; subCategoryId?: string; vehicleCode?: string; brandId?: string; pageIndex?: number; pageSize?: number }) => {
+    const mock = undefined;
+    const body = { keyword: searchBody.keyword || '', subCategoryId: searchBody.subCategoryId || '', vehicleCode: searchBody.vehicleCode || '', brandId: searchBody.brandId || '', pageIndex: searchBody.pageIndex || 1, pageSize: searchBody.pageSize || 100 };
+    return this.request<Part[]>('Parts/search', 'POST', body, true, false, mock);
+  };
+
   // Get parts by category (backend: GET api/parts/category/{category})
   getPartsByCategory = (category: string) => {
     const mock = undefined;
