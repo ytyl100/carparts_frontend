@@ -1002,12 +1002,50 @@ const SearchParts: React.FC<SearchPartsProps> = ({ onAddToCart, isAdmin = false 
     setLoading(true);
     try {
       let parts: Part[] = [];
-      if (term.trim()) {
+      
+      // 优先按 vehicleCode 获取配件（如果有选择车型）
+      if (selectedVehicleCode) {
+        // 获取该 vehicleCode 下的所有主类目 -> 子类目 -> 配件
+        try {
+          const mainCats = await MockApiClient.getMainCategoriesByVehicleCode(selectedVehicleCode);
+          const subCatIds: string[] = [];
+          
+          for (const mc of mainCats) {
+            const subs = await MockApiClient.getSubCategoriesByParentId(mc.id);
+            subCatIds.push(...subs.map(s => s.id));
+          }
+          
+          // 获取所有子类目的配件
+          const allParts: Part[] = [];
+          for (const scId of subCatIds) {
+            try {
+              const ps = await MockApiClient.getPartsBySubCategoryId(scId);
+              allParts.push(...ps);
+            } catch { /* skip */ }
+          }
+          
+          parts = allParts;
+        } catch (e) {
+          console.error('VehicleCode search failed:', e);
+          parts = [];
+        }
+        
+        // 如果有搜索词，再过滤
+        if (term.trim()) {
+          const t = term.toLowerCase();
+          parts = parts.filter(p => 
+            p.standardName?.toLowerCase().includes(t) ||
+            p.originalName?.toLowerCase().includes(t) ||
+            p.oeNumber?.toLowerCase().includes(t) ||
+            p.partsNumber?.toLowerCase().includes(t)
+          );
+        }
+      } else if (term.trim()) {
+        // 纯关键词搜索
         try {
           parts = await MockApiClient.searchParts(term.trim());
         } catch (apiError: any) {
           console.error('API search failed:', apiError);
-          // 降级处理：如果API不可用，使用本地数据搜索
           const t = term.toLowerCase();
           parts = (PARTS_MOCK || []).filter(p => {
             return (
@@ -1019,19 +1057,20 @@ const SearchParts: React.FC<SearchPartsProps> = ({ onAddToCart, isAdmin = false 
           });
         }
       } else if (category) {
+        // 按子类目筛选
         try {
-          parts = await MockApiClient.getPartsByCategory(category);
+          parts = await MockApiClient.getPartsBySubCategoryId(category);
         } catch (apiError: any) {
           console.error('Category search failed:', apiError);
           parts = (PARTS_MOCK || []).filter(p => p.subCategoryId === category);
         }
       } else {
-        // default: show all
-        parts = PARTS_MOCK;
-      }
-
-      if (brand) {
-        parts = parts.filter(p => (p.priceRecords || []).some(pr => pr.brand === brand));
+        // 默认显示所有（用API）
+        try {
+          parts = await MockApiClient.searchParts('');
+        } catch {
+          parts = PARTS_MOCK;
+        }
       }
 
       setResults(parts);
@@ -1079,7 +1118,7 @@ const SearchParts: React.FC<SearchPartsProps> = ({ onAddToCart, isAdmin = false 
           ))}
         </select>
         <button onClick={doSearch} className="px-4 py-2 bg-blue-600 text-white font-black text-xs rounded shadow">搜索</button>
-        <button onClick={() => { setTerm(''); setCategory(''); setBrand(''); setResults([]); setSortField(null); }} className="px-4 py-2 border border-gray-200 text-xs rounded">重置</button>
+        <button onClick={() => { setTerm(''); setCategory(''); setBrand(''); setSelectedVehicleCode(''); setQuickSearchBrandId(''); setResults([]); setSortField(null); }} className="px-4 py-2 border border-gray-200 text-xs rounded">重置</button>
         
         {isAdmin && (
           <div className="ml-auto flex items-center space-x-2">
