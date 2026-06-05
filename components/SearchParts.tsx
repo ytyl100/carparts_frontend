@@ -1013,18 +1013,21 @@ const SearchParts: React.FC<SearchPartsProps> = ({ onAddToCart, isAdmin = false 
           if (selectedBrand) {
             // 获取品牌的车型层级
             const hierarchy = await MockApiClient.getHierarchyByBrandId(selectedBrand.id);
-            if (hierarchy) {
+            if (hierarchy && hierarchy.regions) {
               // 遍历所有车型获取配件
               const allParts: Part[] = [];
-              const processRegion = (region: any) => {
-                if (!region) return;
-                const models = region.models || {};
-                Object.values(models).forEach((modelData: any) => {
-                  // 处理带releases的车型
-                  if (modelData.releases) {
-                    Object.values(modelData.releases).forEach((releaseData: any) => {
-                      if (Array.isArray(releaseData)) {
-                        releaseData.forEach(async (code: string) => {
+              
+              // 遍历regions (list)
+              for (const region of hierarchy.regions) {
+                if (!region.models) continue;
+                // 遍历models (list)
+                for (const model of region.models) {
+                  // 处理releases
+                  if (model.releases && Array.isArray(model.releases)) {
+                    for (const release of model.releases) {
+                      if (release.codes && Array.isArray(release.codes)) {
+                        // 遍历codes获取配件
+                        for (const code of release.codes) {
                           try {
                             const mainCats = await MockApiClient.getMainCategoriesByVehicleCode(code);
                             for (const mc of mainCats) {
@@ -1035,13 +1038,13 @@ const SearchParts: React.FC<SearchPartsProps> = ({ onAddToCart, isAdmin = false 
                               }
                             }
                           } catch { /* skip */ }
-                        });
+                        }
                       }
-                    });
+                    }
                   }
                   // 处理直接有codes的车型
-                  if (modelData.codes && Array.isArray(modelData.codes)) {
-                    modelData.codes.forEach(async (code: string) => {
+                  if (model.codes && Array.isArray(model.codes)) {
+                    for (const code of model.codes) {
                       try {
                         const mainCats = await MockApiClient.getMainCategoriesByVehicleCode(code);
                         for (const mc of mainCats) {
@@ -1052,20 +1055,18 @@ const SearchParts: React.FC<SearchPartsProps> = ({ onAddToCart, isAdmin = false 
                           }
                         }
                       } catch { /* skip */ }
-                    });
+                    }
                   }
-                });
-              };
-              
-              // 处理regions格式
-              if (hierarchy.regions) {
-                Object.values(hierarchy.regions).forEach((region: any) => processRegion(region));
-              } else if (hierarchy.models) {
-                processRegion({ models: hierarchy.models });
+                }
               }
               
               // 去重
-              const uniqueParts = allParts.filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i);
+              const seen = new Set<string>();
+              const uniqueParts = allParts.filter(p => {
+                if (seen.has(p.id)) return false;
+                seen.add(p.id);
+                return true;
+              });
               parts = uniqueParts;
             }
           }
