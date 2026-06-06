@@ -37,6 +37,7 @@ const App: React.FC = () => {
   // Cart State
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [duplicateWarning, setDuplicateWarning] = useState(false);
 
   // Auto-login if token exists
   useEffect(() => {
@@ -90,6 +91,21 @@ const App: React.FC = () => {
   };
 
   const addToCart = (item: CartItem) => {
+    // 检验是否重复：如果 oeNumber 或 partsNumber 任意一项在采购单中存在
+    const isDuplicate = cart.some((cartItem) => {
+      const cartPart = cartItem.part;
+      const newPart = item.part;
+      return (
+        (cartPart.oeNumber && newPart.oeNumber && cartPart.oeNumber === newPart.oeNumber) ||
+        (cartPart.partsNumber && newPart.partsNumber && cartPart.partsNumber === newPart.partsNumber)
+      );
+    });
+
+    if (isDuplicate) {
+      setDuplicateWarning(true);
+      return;
+    }
+
     setCart((prev) => [...prev, item]);
     setIsCartOpen(true);
   };
@@ -242,6 +258,25 @@ const App: React.FC = () => {
           onRemove={removeFromCart}
         />
       </div>
+
+      {/* 重复添加警告弹窗 */}
+      {duplicateWarning && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+          <div className="bg-white rounded-lg shadow-2xl p-6 max-w-sm mx-4">
+            <div className="text-center">
+              <div className="text-4xl mb-3">⚠️</div>
+              <h3 className="text-lg font-bold text-gray-800 mb-2">重复添加</h3>
+              <p className="text-gray-600 mb-4">当前选择的零部件已经在采购单内，请不要重复采购</p>
+              <button
+                onClick={() => setDuplicateWarning(false)}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors"
+              >
+                确定
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <LoginModal
         isOpen={isLoginModalOpen}
