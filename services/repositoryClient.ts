@@ -208,8 +208,9 @@ class RepositoryClient {
       image: string;
     };
   }): Promise<BatchUpdateResponse> => {
+    // 注意：后端 CarPartsController 使用 POST api/CarParts/batch-update
     return this.request<BatchUpdateResponse>(
-      'Parts/batch-update', 
+      'CarParts/batch-update', 
       'POST', 
       updateData, 
       true, 
